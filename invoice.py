@@ -1,8 +1,9 @@
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
+
 
 def add_page_numbers(canvas, doc):
     page_num = canvas.getPageNumber()
@@ -12,8 +13,7 @@ def add_page_numbers(canvas, doc):
 
 
 def generate_invoice():
-    doc = SimpleDocTemplate("invoice.pdf", pagesize=letter,
-                            topMargin=0.5, leftMargin=15, rightMargin=15)
+    doc = SimpleDocTemplate("invoice.pdf", pagesize=A4, topMargin=0.5, leftMargin=15, rightMargin=15)
     story = []
 
     styles = getSampleStyleSheet()
@@ -398,9 +398,244 @@ def generate_invoice():
     table_calculation_data = Table(table_calculation_data, colWidths=col_widths)
     story.append(table_calculation_data)
     
+    # Create a paragraph with underlined text
+    underline_style = ParagraphStyle(
+        name='Underline',
+        parent=styles['title'],
+        fontSize=11,
+        textColor=colors.HexColor("#000000"),
+        underline=True,
+        underlineColor=colors.HexColor("#000000"),
+        underlineGap=1,
+        underlineOffset=-2,
+        alignment=0,
+    )
+    underlined_text = Paragraph('<u>Terms & Payment Remark:</u>', underline_style)
+    
+    story.append(underlined_text)
+    story.append(Spacer(1, 0.5*inch))
+    
+    # Create a paragraph with underlined text
+    remark_underline_style = ParagraphStyle(
+        name='Underline',
+        parent=styles['title'],
+        fontSize=12,
+        textColor=colors.HexColor("#000000"),
+        underline=True,
+        underlineColor=colors.HexColor("#000000"),
+        underlineGap=1,
+        underlineOffset=-2,
+        alignment=0,
+    )
+    remark_text_style = ParagraphStyle(
+        name='Remark Text',
+        parent=styles['Normal'],
+        fontSize=12,
+        textColor=primary_color,
+        underline=True,
+        underlineColor=primary_color,
+        alignment=0,
+    )
+    remark_underlined_text = Paragraph('<u>Remark:</u>', remark_underline_style)
+    text1 = Paragraph('Please make cash / cheque payable to PARTY WORLD TENT ENTERPRISE', remark_text_style)
+    text2 = Paragraph('Account number: 2-029383HF9378', remark_text_style)
+    
+    story.append(remark_underlined_text)
+    story.append(Spacer(1, -0.08*inch))
+    story.append(text1)
+    story.append(Spacer(1, 0.06*inch))
+    story.append(text2)
+    
+    # Custom styles
+    left_col_style = ParagraphStyle(
+        name='LeftColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        leftIndent=0.78 * inch,  # Align lines to the start
+    )
 
+    left_colon_style = ParagraphStyle(
+        name='LeftColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        leftIndent=-1 * inch,  # Align lines to the start
+    )
+
+    left_col_username = ParagraphStyle(
+        name='LeftColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.black,
+        leftIndent=-1.1 * inch,  # Align lines to the start
+    )
+    left_col_value = ParagraphStyle(
+        name='LeftColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        leftIndent=-0.8 * inch,  # Align lines to the start
+    )
+
+    right_col_style = ParagraphStyle(
+        name='RightColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        rightIndent=0,  # Align lines to the end
+        alignment=0,  # Right align the content
+        leftIndent=0.8 * inch
+    )
+
+    right_colon_style = ParagraphStyle(
+        name='LeftColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        leftIndent=-0.2 * inch,  # Align lines to the start
+    )
+
+    right_col_val_style = ParagraphStyle(
+        name='RightColumn',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        rightIndent=0,  # Align lines to the end
+        alignment=0,  # Right align the content
+        leftIndent=-0.2 * inch
+    )
+
+    
+    # demo section
+    shop_style = ParagraphStyle(
+        name='ShopName',
+        parent=styles['title'],
+        fontSize=14,
+        textColor=colors.HexColor('#000000'),
+        underline=True,
+        underlineColor=primary_color,
+        alignment=0,
+    )
+    shop_name = Paragraph('Demo Shop', shop_style)
+    
+    story.append(Spacer(1, 0.3*inch))
+    story.append(shop_name)
+    story.append(Spacer(1, -0.1*inch))
+    
+    data = [
+        [
+            Paragraph('Reg No.', left_col_style),
+            Paragraph(':', left_colon_style),
+            Paragraph('(+94894879KJIF45)', left_col_username),
+            Paragraph('Acceptance & Confirmation', right_col_style),
+        ],
+    ]
+    col_widths = [2.5 * inch, 0.2 * inch, 2.5 * inch, 4.2 * inch]
+
+    table = Table(data, colWidths=col_widths)
+
+    # Enable word wrapping for the content
+    table.setStyle(TableStyle([
+        ('WORDWRAP', (0, 0), (-1, -1), True),
+    ]))
+    story.append(table)
+    
+    story.append(Spacer(1, 0.5*inch))
+    
+    
+    
+    line_color = colors.black
+
+    # Create the left line
+    left_line = Table(
+        [[""]],
+        colWidths=["32%"],
+        style=[
+            ("LINEABOVE", (0, 0), (-1, -1), 1, line_color),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ],
+        hAlign="LEFT",
+    )
+    story.append(left_line)
+    
+    story.append(Spacer(1, -0.2 * inch))
+
+    # Create the right line
+    right_line = Table(
+        [[""]],
+        colWidths=["32%"],
+        style=[
+            ("LINEABOVE", (0, 0), (-1, -1), 1, line_color),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ],
+        hAlign="RIGHT",
+    )
+    story.append(right_line)
+    
+    signature_rubber_stamp = ParagraphStyle(
+        name='signature_rubber_stamp',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        alignment=2,
+    )
+    signature_company_rubber_stamp = Paragraph('Signature / Company Rubber Stamp', signature_rubber_stamp)
+    story.append(signature_company_rubber_stamp)
+    
+    # Attachment & Remark
+    attachment_tile = ParagraphStyle(
+        name='attachment_tile',
+        parent=styles['title'],
+        fontSize=12,
+        textColor=primary_color,
+        alignment=0,
+    )
+    attachment = Paragraph('<u>Attachment:</u>', attachment_tile)
+    story.append(attachment)
+    
+    attachment_subtile = ParagraphStyle(
+        name='attachment_subtile',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=primary_color,
+        alignment=0,
+        leftIndent=0.5 * inch
+    )
+    attachment_subtitle = Paragraph('Square request of the area is ahead name kia koarina', attachment_subtile)
+    story.append(attachment_subtitle)
+        
+    story.append(Spacer(1, 0.2 * inch))
+    
+    attachments = ["image.jpg", "image.jpg"]
+    attachments = []
+    for attachment_path in attachments:
+        image = Image(attachment_path, width=200, height=200, hAlign="LEFT")  # Adjust the width and height as needed
+
+        # Create a spacer for indentation
+        left_indent = Spacer(1, 0.1*inch)  # Adjust the indentation as needed
+
+        # Add the indented image to the story
+        # story.append(left_indent)
+        # story.append(image)
+        
+        attachments.append(image)
+        
+    left_line = Table(
+        [[""]],
+        colWidths=["32%"],
+        style=[
+            ("LINEABOVE", (0, 0), (-1, -1), 1, line_color),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ],
+        hAlign="LEFT",
+    )
+
+    
     # Build the PDF document
-    doc.build(story, onFirstPage=add_page_numbers, onLaterPages=add_page_numbers)
+    # doc.build(story, onFirstPage=add_page_numbers, onLaterPages=add_page_numbers)
+    
+    doc.build(story)
 
 
 generate_invoice()
