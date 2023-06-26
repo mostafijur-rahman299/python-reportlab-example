@@ -86,6 +86,8 @@ def generate_invoice():
     phone_table.setStyle(TableStyle([('ALIGN', (0, 0), (0, 0), 'CENTER')]))
     story.append(phone_table)
     
+    #=============================
+    
     # Line separator
     line_color = primary_color
     story.append(Spacer(1, 0.1*inch))  # Add some spacing before the line
@@ -262,6 +264,7 @@ def generate_invoice():
 
     story.append(table)
     
+    #==================================
     
     # Table data
     invoice_data = [
@@ -398,6 +401,8 @@ def generate_invoice():
     table_calculation_data = Table(table_calculation_data, colWidths=col_widths)
     story.append(table_calculation_data)
     
+    #==========================================
+    
     # Create a paragraph with underlined text
     underline_style = ParagraphStyle(
         name='Underline',
@@ -445,6 +450,8 @@ def generate_invoice():
     story.append(text1)
     story.append(Spacer(1, 0.06*inch))
     story.append(text2)
+    
+    # =============================================================================
     
     # Custom styles
     left_col_style = ParagraphStyle(
@@ -604,6 +611,8 @@ def generate_invoice():
     )
     attachment_subtitle = Paragraph('Square request of the area is ahead name kia koarina', attachment_subtile)
     story.append(attachment_subtitle)
+    
+    # =================================================================
         
     story.append(Spacer(1, 0.2 * inch))
     
@@ -622,6 +631,8 @@ def generate_invoice():
         flowables.append(image)
         
     story.append(Table(flowables))
+    
+    #================================================================
         
     doc.build(story)
 
