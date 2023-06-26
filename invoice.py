@@ -1,5 +1,5 @@
 from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image
+from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image, Indenter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -608,33 +608,21 @@ def generate_invoice():
     story.append(Spacer(1, 0.2 * inch))
     
     attachments = ["image.jpg", "image.jpg"]
-    attachments = []
+    flowables = []
+
     for attachment_path in attachments:
-        image = Image(attachment_path, width=200, height=200, hAlign="LEFT")  # Adjust the width and height as needed
+        # Create an Image object with adjusted width and height
+        image = [Image(attachment_path, width=450, height=250)]
 
-        # Create a spacer for indentation
-        left_indent = Spacer(1, 0.1*inch)  # Adjust the indentation as needed
+        # Create a spacer for left and right margins
+        left_margin = [Spacer(6.7*inch, 0)]
 
-        # Add the indented image to the story
-        # story.append(left_indent)
-        # story.append(image)
+        # Append the left margin, image, and right margin to the flowables list
+        flowables.append(left_margin)
+        flowables.append(image)
         
-        attachments.append(image)
+    story.append(Table(flowables))
         
-    left_line = Table(
-        [[""]],
-        colWidths=["32%"],
-        style=[
-            ("LINEABOVE", (0, 0), (-1, -1), 1, line_color),
-            ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ],
-        hAlign="LEFT",
-    )
-
-    
-    # Build the PDF document
-    # doc.build(story, onFirstPage=add_page_numbers, onLaterPages=add_page_numbers)
-    
     doc.build(story)
 
 
