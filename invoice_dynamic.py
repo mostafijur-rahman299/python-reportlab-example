@@ -12,6 +12,7 @@ class GenerateInvoice:
         self.story = []
         self.styles = getSampleStyleSheet()
         self.primary_color = colors.HexColor("#443d3d")
+        self.page_number = '1'
         
         self.centered_style = ParagraphStyle(
             name='Centered',
@@ -21,6 +22,7 @@ class GenerateInvoice:
             alignment=1,  # Center align the content
         )
         
+    
     def top_header(self, shop_name, reg_number, address1="", address2="", phone_number="", whatsapp_number="", email=""):
         # Custom styles
         header_style = ParagraphStyle(
@@ -43,7 +45,7 @@ class GenerateInvoice:
         header_text = [
             [Paragraph(shop_name, header_style)],
             [Spacer(1, -1)],  # Add spacing between paragraphs
-            [Paragraph(reg_number, subheader_style)],
+            [Paragraph(f"Reg.No: {reg_number}", subheader_style)],
             [Spacer(1, -20)],  # Add spacing between paragraphs
             [Paragraph(
                 address1, subheader_style)],
@@ -63,7 +65,7 @@ class GenerateInvoice:
         # Phone number with icon
         custom_style = ParagraphStyle(
             name='CustomStyle',
-            leftIndent=212,       # Left margin in points
+            leftIndent=205,       # Left margin in points
             rightIndent=0,      # Right margin in points
             spaceBefore=10,      # Space before the paragraph in points
             spaceAfter=100       # Space after the paragraph in points
@@ -71,7 +73,7 @@ class GenerateInvoice:
         
         phone_number_text = [
             [Paragraph(
-                    f"<img src='phone-192.png' width='15' height='15' />{phone_number}<img src='whatsapp-192.png' width='15' height='15' />{whatsapp_number}<img src='email-50.png' width='15' height='15' />{email}", custom_style
+                    f"<img src='phone-192.png' width='15' height='15' /> {phone_number}  <img src='whatsapp-192.png' width='15' height='15' />  {whatsapp_number}  <img src='email-50.png' width='15' height='15' />{email}", custom_style
                 ),
             ]
         ]
@@ -204,7 +206,7 @@ class GenerateInvoice:
                 Paragraph('',),
                 Paragraph('Page No.', right_col_style),
                 Paragraph(':', right_colon_style),
-                Paragraph('1/2', right_col_val_style),
+                Paragraph(self.page_number, right_col_val_style),
             ],
             [
                 Paragraph('Tel', left_col_style),
@@ -235,12 +237,12 @@ class GenerateInvoice:
 
         self.story.append(table)
            
-    def header(self, header_data):
-        self.top_header(header_data.get("shop_name", ""), header_data.get("reg_number", ""), header_data.get("address1", ""), header_data.get("address2", ""), header_data.get("phone_number", ""), header_data.get("whatsapp_number", ""), header_data.get("email", ""))
+    def header(self, data):
+        self.top_header(data.get("shop_name", ""), data.get("registration_no", ""), data.get("address1", ""), data.get("address2", ""), data.get("phone_number", ""), data.get("whatsapp_number", ""), data.get("email", ""))
         self.line_separator("100%", 1)
         self.story.append(Spacer(1, -0.2 * inch))  # Add some spacing after the line
         
-        self.invoice_header(header_data.get("invoice_to", ""), header_data.get("invoice_no", ""), header_data.get("DO_No", ""), header_data.get("PO_No", ""), header_data.get("invoice_date", ""), header_data.get("handled_by", ""), header_data.get("payment_term", ""), header_data.get("telephone_no", ""), header_data.get("email", ""))
+        self.invoice_header(data.get("invoice_to", ""), data.get("invoice_no", ""), data.get("DO_No", ""), data.get("PO_No", ""), data.get("invoice_date", ""), data.get("handled_by", ""), data.get("payment_term", ""), data.get("telephone_no", ""), data.get("email", ""))
                  
     def line_separator(self, width, thickness):
         # Line separator
@@ -252,10 +254,6 @@ class GenerateInvoice:
         self.story.append(line)
             
     def invoice_table(self, invoice_data):
-        # invoice_data = [
-        #     ['1', 'Hair Cut', '120.00', '1', '120.00'],
-        #     ['2', 'Cut Girl', '130.00', '13', '1320.00'],
-        # ]
         
         wrap_style_val = ParagraphStyle(
             name='WrapStyle',
@@ -383,6 +381,22 @@ class GenerateInvoice:
         self.story.append(table_calculation_data)
             
     def terms_and_remark(self, account_number=""):
+        underline_style = ParagraphStyle(
+            name='Underline',
+            parent=self.styles['title'],
+            fontSize=11,
+            textColor=colors.HexColor("#000000"),
+            underline=True,
+            underlineColor=colors.HexColor("#000000"),
+            underlineGap=1,
+            underlineOffset=-2,
+            alignment=0,
+        )
+        underlined_text = Paragraph('<u>Terms & Payment Remark:</u>', underline_style)
+        
+        self.story.append(underlined_text)
+        self.story.append(Spacer(1, 0.5*inch))
+    
         remark_underline_style = ParagraphStyle(
             name='Underline',
             parent=self.styles['title'],
@@ -397,7 +411,7 @@ class GenerateInvoice:
         remark_text_style = ParagraphStyle(
             name='Remark Text',
             parent=self.styles['Normal'],
-            fontSize=12,
+            fontSize=11,
             textColor=self.primary_color,
             underline=True,
             underlineColor=self.primary_color,
@@ -523,9 +537,9 @@ class GenerateInvoice:
             alignment=2,
         )
         signature_company_rubber_stamp = Paragraph('Signature / Company Rubber Stamp', signature_rubber_stamp)
-        self.story.append(signature_company_rubber_stamp)
-        
-        # Attachment & Remark
+        self.story.append(signature_company_rubber_stamp)        
+            
+    def attachments(self, attachments=[], attachment_remark=""):
         attachment_tile = ParagraphStyle(
             name='attachment_tile',
             parent=self.styles['title'],
@@ -544,10 +558,9 @@ class GenerateInvoice:
             alignment=0,
             leftIndent=0.5 * inch
         )
-        attachment_subtitle = Paragraph('Square request of the area is ahead name kia koarina', attachment_subtile)
+        attachment_subtitle = Paragraph(attachment_remark, attachment_subtile)
         self.story.append(attachment_subtitle)
-            
-    def attachments(self, attachments):
+        
         self.story.append(Spacer(1, 0.2 * inch))
         flowables = []
 
@@ -561,21 +574,54 @@ class GenerateInvoice:
             # Append the left margin, image, and right margin to the flowables list
             flowables.append(left_margin)
             flowables.append(image)
-            
-        self.story.append(Table(flowables))
+
+        if flowables:
+            self.story.append(Table(flowables))
         
     def build_pdf(self, data={}):
+                
+        self.header(data)
         
-        header = data.get("header", {})
-        self.header(header)
+        self.invoice_table(data.get("invoice_table_data", []))
         
-        self.invoice_table([])
+        self.terms_and_remark(data.get("account_number", "-"))
         
-        self.terms_and_remark()
+        self.acceptance_signature(data.get("shop_name", ""), data.get("registration_no", "-"))
         
-        self.doc.build(self.story)
+        self.attachments(data.get("attachments",[]), data.get("attachment_remark", "-"))
+        
+        # Update the page numbers on each page
+        def page_number_update(canvas, doc):
+            self.page_number = doc.page
+            canvas.saveState()
+        
+        self.doc.build(self.story, onFirstPage=page_number_update, onLaterPages=page_number_update)
         
 invoice = GenerateInvoice("dynamic_invoice.pdf")
 
-invoice.build_pdf({})
+data_format = {
+    "shop_name": "New Alhamra Shop",
+    "registration_no": "+845749749JF",
+    "address1": "Cecilia Chapman 711-2880 Nulla St. Mankato Mississippi 96522",
+    "address2": "USA, UK, Canada, Australia, and 30+ more countries.",
+    "phone_number": "+9484948494u49",
+    "whatsapp_number": "+846846484",
+    "email": "example@gmail.net",
+    "invoice_to": "Sk vharma",
+    "invoice_no": "+8474874JH847",
+    "DO_No": "JFU8474984JH",
+    "PO_No": "JFU84749343434",
+    "invoice_date": "12-Jun-2023",
+    "handled_by": "Super Admin",
+    "payment_term": "-",
+    "telephone_no": "(+60847947494749)",
+    "account_number": "94849JUFJ9849",
+    "invoice_table_data": [
+            ['1', 'Hair Cut', '120.00', '1', '120.00'],
+        ],
+    "attachments": ["image.jpg"],
+    "attachment_remark": "Location of dummy, address of dummy, location map, directions to dummy Bangalore,Akshya"
+}
+
+invoice.build_pdf(data_format)
 
