@@ -5,10 +5,10 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 
 
-class GenerateInvoice:
-    def __init__(self, name_of_pdf):
-        
-        self.doc = SimpleDocTemplate(name_of_pdf, pagesize=A4, topMargin=0.5, leftMargin=15, rightMargin=15)
+class GenerateInvoicePDF:
+    def __init__(self, filename):
+        # self.filepath = f"{settings.BASE_DIR}{settings.MEDIA_DIRECTORY}invoice-pdfs"
+        self.doc = SimpleDocTemplate(f"{filename}", pagesize=A4, topMargin=0.1 * inch, leftMargin=15, rightMargin=15)
         self.story = []
         self.styles = getSampleStyleSheet()
         self.primary_color = colors.HexColor("#443d3d")
@@ -53,7 +53,7 @@ class GenerateInvoice:
                 address2, subheader_style)],
         ]
 
-        header_table = Table(header_text, colWidths=[2*inch])
+        header_table = Table(header_text, colWidths=[3*inch])
         header_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'LEFT')]))
 
         center_table = Table([[header_table]], style=[
@@ -64,7 +64,7 @@ class GenerateInvoice:
         # Phone number with icon
         custom_style = ParagraphStyle(
             name='CustomStyle',
-            leftIndent=205,       # Left margin in points
+            leftIndent=170,       # Left margin in points
             rightIndent=0,      # Right margin in points
             spaceBefore=10,      # Space before the paragraph in points
             spaceAfter=100       # Space after the paragraph in points
@@ -72,7 +72,7 @@ class GenerateInvoice:
         
         phone_number_text = [
             [Paragraph(
-                    f"<img src='phone-192.png' width='15' height='15' /> {phone_number}  <img src='whatsapp-192.png' width='15' height='15' />  {whatsapp_number}  <img src='email-50.png' width='15' height='15' />{email}", custom_style
+                    f"<img src='static/images/icons/phone-192.png' width='15' height='15' /> {phone_number}  <img src='static/images/icons/whatsapp-192.png' width='15' height='15' />  {whatsapp_number}  <img src='static/images/icons/email-50.png' width='15' height='15' />{email}", custom_style
                 ),
             ]
         ]
@@ -595,32 +595,4 @@ class GenerateInvoice:
             canvas.saveState()
         
         self.doc.build(self.story, onFirstPage=page_number_update, onLaterPages=page_number_update)
-        
-invoice = GenerateInvoice("dynamic_invoice.pdf")
-
-data_format = {
-    "shop_name": "New Alhamra Shop",
-    "registration_no": "+845749749JF",
-    "address1": "Cecilia Chapman 711-2880 Nulla St. Mankato Mississippi 96522",
-    "address2": "USA, UK, Canada, Australia, and 30+ more countries.",
-    "phone_number": "+9484948494u49",
-    "whatsapp_number": "+846846484",
-    "email": "example@gmail.net",
-    "invoice_to": "Sk vharma",
-    "invoice_no": "+8474874JH847",
-    "DO_No": "JFU8474984JH",
-    "PO_No": "JFU84749343434",
-    "invoice_date": "12-Jun-2023",
-    "handled_by": "Super Admin",
-    "payment_term": "-",
-    "telephone_no": "(+60847947494749)",
-    "account_number": "94849JUFJ9849",
-    "invoice_table_data": [
-            ['1', 'Hair Cut', '120.00', '1', '120.00'],
-        ],
-    "attachments": ["image.jpg"],
-    "attachment_remark": "Location of dummy, address of dummy, location map, directions to dummy Bangalore,Akshya"
-}
-
-invoice.build_pdf(data_format)
 
