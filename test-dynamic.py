@@ -3,6 +3,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 
 class GenerateInvoicePDF:
@@ -14,28 +16,30 @@ class GenerateInvoicePDF:
         self.primary_color = colors.HexColor("#443d3d")
         self.page_number = '1'
         
-        self.centered_style = ParagraphStyle(
-            name='Centered',
-            parent=self.styles['title'],
-            fontSize=28,
-            textColor=colors.HexColor("#5e5b5b"),
-            alignment=1,  # Center align the content
-        )
         
+        self.arial = 'fonts/arial/Arialn.ttf'
+        self.roboto = 'fonts/roboto/Roboto-Black.ttf'
+        
+    
     def top_header(self, shop_name, reg_number, address1="", address2="", phone_number="", whatsapp_number="", email=""):
         # Custom styles
+        
+        pdfmetrics.registerFont(TTFont('arial', self.arial))
+        pdfmetrics.registerFont(TTFont('roboto', self.roboto))
+        
         header_style = ParagraphStyle(
             name='Header',
-            parent=self.styles['Heading5'],
+            parent=self.styles['Normal'],
             fontSize=13,
             textColor=colors.black,
             leftIndent=0,  # Align lines to the start
+            fontName='roboto'
         )
 
         subheader_style = ParagraphStyle(
             name='Subheader',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             leftIndent=0,  # Align lines to the start
         )
@@ -43,12 +47,12 @@ class GenerateInvoicePDF:
         # Header
         header_text = [
             [Paragraph(shop_name, header_style)],
-            [Spacer(1, -1)],  # Add spacing between paragraphs
+            [Spacer(1, -3)],  # Add spacing between paragraphs
             [Paragraph(f"Reg.No: {reg_number}", subheader_style)],
-            [Spacer(1, -20)],  # Add spacing between paragraphs
+            [Spacer(1, -25)],  # Add spacing between paragraphs
             [Paragraph(
                 address1, subheader_style)],
-            [Spacer(1, -20)],  # Add spacing between paragraphs
+            [Spacer(1, -25)],  # Add spacing between paragraphs
             [Paragraph(
                 address2, subheader_style)],
         ]
@@ -64,7 +68,7 @@ class GenerateInvoicePDF:
         # Phone number with icon
         custom_style = ParagraphStyle(
             name='CustomStyle',
-            leftIndent=170,       # Left margin in points
+            leftIndent=167,       # Left margin in points
             rightIndent=0,      # Right margin in points
             spaceBefore=10,      # Space before the paragraph in points
             spaceAfter=100       # Space after the paragraph in points
@@ -72,7 +76,7 @@ class GenerateInvoicePDF:
         
         phone_number_text = [
             [Paragraph(
-                    f"<img src='static/images/icons/phone-192.png' width='15' height='15' /> {phone_number}  <img src='static/images/icons/whatsapp-192.png' width='15' height='15' />  {whatsapp_number}  <img src='static/images/icons/email-50.png' width='15' height='15' />{email}", custom_style
+                    f"<img src='phone.png' width='15' height='15' /> {phone_number}  <img src='whatsapp.png' width='15' height='15' />  {whatsapp_number}  <img src='gmail.png' width='15' height='15' />{email}", custom_style
                 ),
             ]
         ]
@@ -83,7 +87,15 @@ class GenerateInvoicePDF:
         
     def invoice_header(self, invoice_to="", invoice_no="", DO_No="", PO_No="", invoice_date="", handled_by="", payment_term="", telephone_no="", email=""):
         # Center align Header
-        centered_invoice_header = Paragraph("Invoice", self.centered_style)
+        centered_style = ParagraphStyle(
+            name='Centered',
+            parent=self.styles['title'],
+            fontSize=26,
+            textColor=colors.HexColor("#5e5b5b"),
+            alignment=1,  # Center align the content
+        )
+        
+        centered_invoice_header = Paragraph("Invoice", centered_style)
         self.story.append(centered_invoice_header)  # Add the centered content to the story
         
         self.story.append(Spacer(1, 0.2 * inch))  # Add some spacing after the invoice
@@ -102,7 +114,7 @@ class GenerateInvoicePDF:
         left_colon_style = ParagraphStyle(
             name='LeftColumn',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             leftIndent=-0.8 * inch,  # Align lines to the start
         )
@@ -110,14 +122,14 @@ class GenerateInvoicePDF:
         left_col_username = ParagraphStyle(
             name='LeftColumn',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=colors.black,
             leftIndent=-0.8 * inch,  # Align lines to the start
         )
         left_col_value = ParagraphStyle(
             name='LeftColumn',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             leftIndent=-0.8 * inch,  # Align lines to the start
         )
@@ -125,7 +137,7 @@ class GenerateInvoicePDF:
         right_col_style = ParagraphStyle(
             name='RightColumn',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             rightIndent=0,  # Align lines to the end
             alignment=0,  # Right align the content
@@ -135,7 +147,7 @@ class GenerateInvoicePDF:
         right_colon_style = ParagraphStyle(
             name='LeftColumn',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             leftIndent=-0.2 * inch,  # Align lines to the start
         )
@@ -143,7 +155,7 @@ class GenerateInvoicePDF:
         right_col_val_style = ParagraphStyle(
             name='RightColumn',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             rightIndent=0,  # Align lines to the end
             alignment=0,  # Right align the content
@@ -252,14 +264,14 @@ class GenerateInvoicePDF:
         )
         self.story.append(line)
             
-    def invoice_table(self, invoice_data):
+    def invoice_table(self, invoice_data, subtotal, discount, total, payment, balance):
         
         wrap_style_val = ParagraphStyle(
             name='WrapStyle',
             parent=getSampleStyleSheet()['Normal'],
             wordWrap='RTL',  # Set word wrap to Left To Right
             textColor=self.primary_color,
-            fontSize=11,
+            fontSize=10,
             alignment=0
         )
         wrap_style_title = ParagraphStyle(
@@ -267,7 +279,7 @@ class GenerateInvoicePDF:
             parent=getSampleStyleSheet()['Normal'],
             wordWrap='RTL',  # Set word wrap to Left To Right
             textColor=colors.black,
-            fontSize=11,
+            fontSize=10,
         )
         
         wrapped_data = []
@@ -307,12 +319,10 @@ class GenerateInvoicePDF:
             
         invoice_table.setStyle(ts)
         self.story.append(invoice_table)
-        
-        line_color = colors.black
-        
+                
         self.story.append(Spacer(1, 0.3*inch))
         
-        self.line_separator("97%", 1)
+        self.line_separator("100%", 1)
         
         self.story.append(Spacer(1, -0.2 * inch))
         
@@ -320,7 +330,7 @@ class GenerateInvoicePDF:
         table_calculation_right_col_style = ParagraphStyle(
             name='RightColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             rightIndent=-260,
             alignment=2,
@@ -330,7 +340,7 @@ class GenerateInvoicePDF:
         table_calculation_right_colon_style = ParagraphStyle(
             name='LeftColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             alignment=2,
             rightIndent=-200
@@ -339,7 +349,7 @@ class GenerateInvoicePDF:
         table_calculation_right_col_val_style = ParagraphStyle(
             name='RightColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             alignment=0,  # Right align the content
             leftIndent=3.5*inch,
@@ -351,27 +361,27 @@ class GenerateInvoicePDF:
             [
                 Paragraph('Subtotal', table_calculation_right_col_style),
                 Paragraph(':', table_calculation_right_colon_style),
-                Paragraph('9485823.00', table_calculation_right_col_val_style),
+                Paragraph(subtotal, table_calculation_right_col_val_style),
             ],
             [
                 Paragraph('Discount', table_calculation_right_col_style),
                 Paragraph(':', table_calculation_right_colon_style),
-                Paragraph('0.00', table_calculation_right_col_val_style),
+                Paragraph(discount, table_calculation_right_col_val_style),
             ],
             [
                 Paragraph('Total', table_calculation_right_col_style),
                 Paragraph(':', table_calculation_right_colon_style),
-                Paragraph('120.00', table_calculation_right_col_val_style),
+                Paragraph(total, table_calculation_right_col_val_style),
             ],
             [
                 Paragraph('Payment', table_calculation_right_col_style),
                 Paragraph(':', table_calculation_right_colon_style),
-                Paragraph('0.00', table_calculation_right_col_val_style),
+                Paragraph(payment, table_calculation_right_col_val_style),
             ],
             [
                 Paragraph('Balance', table_calculation_right_col_style),
                 Paragraph(':', table_calculation_right_colon_style),
-                Paragraph('120.00', table_calculation_right_col_val_style),
+                Paragraph(balance, table_calculation_right_col_val_style),
             ],
         ]
 
@@ -383,7 +393,7 @@ class GenerateInvoicePDF:
         underline_style = ParagraphStyle(
             name='Underline',
             parent=self.styles['title'],
-            fontSize=11,
+            fontSize=10,
             textColor=colors.HexColor("#000000"),
             underline=True,
             underlineColor=colors.HexColor("#000000"),
@@ -399,7 +409,7 @@ class GenerateInvoicePDF:
         remark_underline_style = ParagraphStyle(
             name='Underline',
             parent=self.styles['title'],
-            fontSize=12,
+            fontSize=11,
             textColor=colors.HexColor("#000000"),
             underline=True,
             underlineColor=colors.HexColor("#000000"),
@@ -410,7 +420,7 @@ class GenerateInvoicePDF:
         remark_text_style = ParagraphStyle(
             name='Remark Text',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             underline=True,
             underlineColor=self.primary_color,
@@ -430,7 +440,7 @@ class GenerateInvoicePDF:
         left_col_style = ParagraphStyle(
             name='LeftColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             leftIndent=0.78 * inch,  # Align lines to the start
         )
@@ -438,7 +448,7 @@ class GenerateInvoicePDF:
         left_colon_style = ParagraphStyle(
             name='LeftColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             leftIndent=-1 * inch,  # Align lines to the start
         )
@@ -446,7 +456,7 @@ class GenerateInvoicePDF:
         left_col_username = ParagraphStyle(
             name='LeftColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=colors.black,
             leftIndent=-1.1 * inch,  # Align lines to the start
         )
@@ -454,7 +464,7 @@ class GenerateInvoicePDF:
         right_col_style = ParagraphStyle(
             name='RightColumn',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             rightIndent=0,  # Align lines to the end
             alignment=0,  # Right align the content
@@ -466,7 +476,7 @@ class GenerateInvoicePDF:
         shop_style = ParagraphStyle(
             name='ShopName',
             parent=self.styles['title'],
-            fontSize=14,
+            fontSize=12,
             textColor=colors.HexColor('#000000'),
             underline=True,
             underlineColor=self.primary_color,
@@ -542,7 +552,7 @@ class GenerateInvoicePDF:
         attachment_tile = ParagraphStyle(
             name='attachment_tile',
             parent=self.styles['title'],
-            fontSize=12,
+            fontSize=11,
             textColor=self.primary_color,
             alignment=0,
         )
@@ -552,7 +562,7 @@ class GenerateInvoicePDF:
         attachment_subtile = ParagraphStyle(
             name='attachment_subtile',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             alignment=0,
             leftIndent=0.5 * inch
@@ -581,7 +591,16 @@ class GenerateInvoicePDF:
                 
         self.header(data)
         
-        self.invoice_table(data.get("invoice_table_data", []))
+        self.invoice_table(
+            data.get("invoice_table_data", []), 
+            data.get("subtotal", "0.00"), 
+            data.get("discount", "0.00"), 
+            data.get("total", "0.00"),
+            data.get("payment", "0.00"),
+            data.get("balance", "0.00")
+        )
+        
+        # subtotal, discount, total, payment, balance
         
         self.terms_and_remark(data.get("account_number", "-"))
         
@@ -596,3 +615,31 @@ class GenerateInvoicePDF:
         
         self.doc.build(self.story, onFirstPage=page_number_update, onLaterPages=page_number_update)
 
+
+invoice = GenerateInvoicePDF("dynamic_invoice.pdf")
+
+data_format = {
+    "shop_name": "New Alhamra Shop 身体乳液",
+    "registration_no": "+845749749JF",
+    "address1": "Cecilia Chapman 711-2880 Nulla St. Mankato Mississippi 96522",
+    "address2": "USA, UK, Canada, Australia, and 30+ more countries.",
+    "phone_number": "+9484948494u49",
+    "whatsapp_number": "+846846484",
+    "email": "example@gmail.net",
+    "invoice_to": "Sk vharma",
+    "invoice_no": "+8474874JH847",
+    "DO_No": "JFU8474984JH",
+    "PO_No": "JFU84749343434",
+    "invoice_date": "12-Jun-2023",
+    "handled_by": "Super Admin",
+    "payment_term": "-",
+    "telephone_no": "(+60847947494749)",
+    "account_number": "94849JUFJ9849",
+    "invoice_table_data": [
+            ['1', 'Hair Cut 身体乳液', '120.00', '1', '120.00'],
+        ],
+    "attachments": ["image.jpg"],
+    "attachment_remark": "Location of dummy, address of dummy, location map, directions to dummy Bangalore,Akshya"
+}
+
+invoice.build_pdf(data_format)
