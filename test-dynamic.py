@@ -1,31 +1,28 @@
 from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image, Indenter
+from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image, Indenter, PageTemplate, BaseDocTemplate, Frame, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+    
 
 class GenerateInvoicePDF:
     def __init__(self, filename):
         # self.filepath = f"{settings.BASE_DIR}{settings.MEDIA_DIRECTORY}invoice-pdfs"
-        self.doc = SimpleDocTemplate(f"{filename}", pagesize=A4, topMargin=0.1 * inch, leftMargin=15, rightMargin=15)
+        self.doc = BaseDocTemplate(f"{filename}", pagesize=A4, topMargin=200, leftMargin=15, rightMargin=15, bottomMargin=200)
         self.story = []
         self.styles = getSampleStyleSheet()
         self.primary_color = colors.HexColor("#443d3d")
         self.page_number = '1'
+        self.data = {}
         
-        
-        self.arial = 'fonts/arial/Arialn.ttf'
-        self.roboto = 'fonts/roboto/Roboto-Black.ttf'
-        
-    
+        pdfmetrics.registerFont(TTFont('MSYTC', 'fonts/microsoft-yahei/chinese.msyh.ttf'))
+
     def top_header(self, shop_name, reg_number, address1="", address2="", phone_number="", whatsapp_number="", email=""):
-        # Custom styles
         
-        pdfmetrics.registerFont(TTFont('arial', self.arial))
-        pdfmetrics.registerFont(TTFont('roboto', self.roboto))
+        template_data = []
         
         header_style = ParagraphStyle(
             name='Header',
@@ -33,7 +30,7 @@ class GenerateInvoicePDF:
             fontSize=13,
             textColor=colors.black,
             leftIndent=0,  # Align lines to the start
-            fontName='roboto'
+            fontName='MSYTC',
         )
 
         subheader_style = ParagraphStyle(
@@ -42,6 +39,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             leftIndent=0,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         # Header
@@ -63,7 +61,7 @@ class GenerateInvoicePDF:
         center_table = Table([[header_table]], style=[
                             ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
         # Add the center-aligned header table to the story
-        self.story.append(center_table)
+        template_data.append(center_table)
 
         # Phone number with icon
         custom_style = ParagraphStyle(
@@ -71,21 +69,26 @@ class GenerateInvoicePDF:
             leftIndent=167,       # Left margin in points
             rightIndent=0,      # Right margin in points
             spaceBefore=10,      # Space before the paragraph in points
-            spaceAfter=100       # Space after the paragraph in points
+            spaceAfter=100,      # Space after the paragraph in points
+            fontName='MSYTC',
         )
         
         phone_number_text = [
             [Paragraph(
-                    f"<img src='phone.png' width='15' height='15' /> {phone_number}  <img src='whatsapp.png' width='15' height='15' />  {whatsapp_number}  <img src='gmail.png' width='15' height='15' />{email}", custom_style
+                    f"<img src='phone.png' width='15' height='15' /> {phone_number}  <img src='whatsapp.png' width='15' height='15' />  {whatsapp_number}  <img src='gmail.png' width='15' height='15' /> {email}", custom_style
                 ),
             ]
         ]
 
         phone_table = Table(phone_number_text)
         phone_table.setStyle(TableStyle([('ALIGN', (0, 0), (0, 0), 'CENTER')]))
-        self.story.append(phone_table)
+        template_data.append(phone_table)
+        return template_data
         
     def invoice_header(self, invoice_to="", invoice_no="", DO_No="", PO_No="", invoice_date="", handled_by="", payment_term="", telephone_no="", email=""):
+        
+        template_data = []
+        
         # Center align Header
         centered_style = ParagraphStyle(
             name='Centered',
@@ -93,12 +96,13 @@ class GenerateInvoicePDF:
             fontSize=26,
             textColor=colors.HexColor("#5e5b5b"),
             alignment=1,  # Center align the content
+            fontName='MSYTC',
         )
         
         centered_invoice_header = Paragraph("Invoice", centered_style)
-        self.story.append(centered_invoice_header)  # Add the centered content to the story
+        template_data.append(centered_invoice_header)  # Add the centered content to the story
         
-        self.story.append(Spacer(1, 0.2 * inch))  # Add some spacing after the invoice
+        template_data.append(Spacer(1, 0.2 * inch))  # Add some spacing after the invoice
         
         styles = getSampleStyleSheet()
 
@@ -109,6 +113,7 @@ class GenerateInvoicePDF:
             fontSize=11,
             textColor=self.primary_color,
             leftIndent=0.9 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         left_colon_style = ParagraphStyle(
@@ -117,6 +122,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             leftIndent=-0.8 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         left_col_username = ParagraphStyle(
@@ -125,6 +131,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=colors.black,
             leftIndent=-0.8 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
         left_col_value = ParagraphStyle(
             name='LeftColumn',
@@ -132,6 +139,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             leftIndent=-0.8 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         right_col_style = ParagraphStyle(
@@ -141,7 +149,8 @@ class GenerateInvoicePDF:
             textColor=self.primary_color,
             rightIndent=0,  # Align lines to the end
             alignment=0,  # Right align the content
-            leftIndent=0.8 * inch
+            leftIndent=0.8 * inch,
+            fontName='MSYTC',
         )
 
         right_colon_style = ParagraphStyle(
@@ -150,6 +159,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             leftIndent=-0.2 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         right_col_val_style = ParagraphStyle(
@@ -159,7 +169,8 @@ class GenerateInvoicePDF:
             textColor=self.primary_color,
             rightIndent=0,  # Align lines to the end
             alignment=0,  # Right align the content
-            leftIndent=-0.2 * inch
+            leftIndent=-0.2 * inch,
+            fontName='MSYTC',
         )
 
         data = [
@@ -246,15 +257,37 @@ class GenerateInvoicePDF:
             ('WORDWRAP', (0, 0), (-1, -1), True),
         ]))
 
-        self.story.append(table)
-           
-    def header(self, data):
-        self.top_header(data.get("shop_name", ""), data.get("registration_no", ""), data.get("address1", ""), data.get("address2", ""), data.get("phone_number", ""), data.get("whatsapp_number", ""), data.get("email", ""))
-        self.line_separator("100%", 1)
-        self.story.append(Spacer(1, -0.2 * inch))  # Add some spacing after the line
+        template_data.append(table)
+        return template_data
+               
+    def add_header(self, canvas, doc):
+        canvas.saveState()
         
-        self.invoice_header(data.get("invoice_to", ""), data.get("invoice_no", ""), data.get("DO_No", ""), data.get("PO_No", ""), data.get("invoice_date", ""), data.get("handled_by", ""), data.get("payment_term", ""), data.get("telephone_no", ""), data.get("email", ""))
-                 
+        data = self.data
+        
+        top_header = self.top_header(data.get("shop_name", ""), data.get("registration_no", ""), data.get("address1", ""), data.get("address2", ""), data.get("phone_number", ""), data.get("whatsapp_number", ""), data.get("email", ""))
+        
+        # for tph in top_header:
+        #     tph.wrap(doc.width, doc.topMargin)
+        #     tph.drawOn(canvas, doc.leftMargin, doc.topMargin)
+            
+        # self.line_separator("100%", 1)
+        # Spacer(1, -0.2 * inch)
+        
+        # Create a KeepTogether instance to wrap the top_header content
+        top_header_content = KeepTogether(top_header)
+
+        top_header_content.wrap(doc.width, doc.topMargin)
+        top_header_content.drawOn(canvas, doc.leftMargin, doc.topMargin)
+        
+        sub_header = self.invoice_header(data.get("invoice_to", ""), data.get("invoice_no", ""), data.get("DO_No", ""), data.get("PO_No", ""), data.get("invoice_date", ""), data.get("handled_by", ""), data.get("payment_term", ""), data.get("telephone_no", ""), data.get("email", ""))
+            
+        # for sheader in sub_header:
+        #     sheader.wrap(doc.width, doc.topMargin)
+        #     sheader.drawOn(canvas, doc.leftMargin, doc.height + doc.topMargin - 12)
+            
+        canvas.restoreState()
+      
     def line_separator(self, width, thickness):
         # Line separator
         line = Table(
@@ -272,7 +305,8 @@ class GenerateInvoicePDF:
             wordWrap='RTL',  # Set word wrap to Left To Right
             textColor=self.primary_color,
             fontSize=10,
-            alignment=0
+            alignment=0,
+            fontName='MSYTC',
         )
         wrap_style_title = ParagraphStyle(
             name='WrapStyle',
@@ -280,6 +314,7 @@ class GenerateInvoicePDF:
             wordWrap='RTL',  # Set word wrap to Left To Right
             textColor=colors.black,
             fontSize=10,
+            fontName='MSYTC',
         )
         
         wrapped_data = []
@@ -335,6 +370,7 @@ class GenerateInvoicePDF:
             rightIndent=-260,
             alignment=2,
             wordWrap='RTL',
+            fontName='MSYTC',
         )
 
         table_calculation_right_colon_style = ParagraphStyle(
@@ -343,7 +379,8 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             alignment=2,
-            rightIndent=-200
+            rightIndent=-200,
+            fontName='MSYTC',
         )
 
         table_calculation_right_col_val_style = ParagraphStyle(
@@ -354,7 +391,8 @@ class GenerateInvoicePDF:
             alignment=0,  # Right align the content
             leftIndent=3.5*inch,
             rightIndent=0.1*inch,
-            wordWrap='RTL'
+            wordWrap='RTL',
+            fontName='MSYTC',
         )
 
         table_calculation_data = [
@@ -400,6 +438,7 @@ class GenerateInvoicePDF:
             underlineGap=1,
             underlineOffset=-2,
             alignment=0,
+            fontName='MSYTC',
         )
         underlined_text = Paragraph('<u>Terms & Payment Remark:</u>', underline_style)
         
@@ -416,6 +455,7 @@ class GenerateInvoicePDF:
             underlineGap=1,
             underlineOffset=-2,
             alignment=0,
+            fontName='MSYTC',
         )
         remark_text_style = ParagraphStyle(
             name='Remark Text',
@@ -425,6 +465,7 @@ class GenerateInvoicePDF:
             underline=True,
             underlineColor=self.primary_color,
             alignment=0,
+            fontName='MSYTC',
         )
         remark_underlined_text = Paragraph('<u>Remark:</u>', remark_underline_style)
         text1 = Paragraph('Please make cash / cheque payable to PARTY WORLD TENT ENTERPRISE', remark_text_style)
@@ -443,6 +484,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             leftIndent=0.78 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         left_colon_style = ParagraphStyle(
@@ -451,6 +493,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             leftIndent=-1 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         left_col_username = ParagraphStyle(
@@ -459,6 +502,7 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=colors.black,
             leftIndent=-1.1 * inch,  # Align lines to the start
+            fontName='MSYTC',
         )
 
         right_col_style = ParagraphStyle(
@@ -468,7 +512,8 @@ class GenerateInvoicePDF:
             textColor=self.primary_color,
             rightIndent=0,  # Align lines to the end
             alignment=0,  # Right align the content
-            leftIndent=0.8 * inch
+            leftIndent=0.8 * inch,
+            fontName='MSYTC',
         )
 
         
@@ -481,6 +526,7 @@ class GenerateInvoicePDF:
             underline=True,
             underlineColor=self.primary_color,
             alignment=0,
+            fontName='MSYTC',
         )
         shop_name = Paragraph(shop_name, shop_style)
         
@@ -541,9 +587,10 @@ class GenerateInvoicePDF:
         signature_rubber_stamp = ParagraphStyle(
             name='signature_rubber_stamp',
             parent=self.styles['Normal'],
-            fontSize=11,
+            fontSize=10,
             textColor=self.primary_color,
             alignment=2,
+            fontName='MSYTC',
         )
         signature_company_rubber_stamp = Paragraph('Signature / Company Rubber Stamp', signature_rubber_stamp)
         self.story.append(signature_company_rubber_stamp)        
@@ -555,6 +602,7 @@ class GenerateInvoicePDF:
             fontSize=11,
             textColor=self.primary_color,
             alignment=0,
+            fontName='MSYTC',
         )
         attachment = Paragraph('<u>Attachment:</u>', attachment_tile)
         self.story.append(attachment)
@@ -565,7 +613,8 @@ class GenerateInvoicePDF:
             fontSize=10,
             textColor=self.primary_color,
             alignment=0,
-            leftIndent=0.5 * inch
+            leftIndent=0.5 * inch,
+            fontName='MSYTC',
         )
         attachment_subtitle = Paragraph(attachment_remark, attachment_subtile)
         self.story.append(attachment_subtitle)
@@ -588,8 +637,8 @@ class GenerateInvoicePDF:
             self.story.append(Table(flowables))
         
     def build_pdf(self, data={}):
-                
-        self.header(data)
+        
+        self.data = data
         
         self.invoice_table(
             data.get("invoice_table_data", []), 
@@ -599,30 +648,32 @@ class GenerateInvoicePDF:
             data.get("payment", "0.00"),
             data.get("balance", "0.00")
         )
-        
-        # subtotal, discount, total, payment, balance
-        
+                
         self.terms_and_remark(data.get("account_number", "-"))
         
         self.acceptance_signature(data.get("shop_name", ""), data.get("registration_no", "-"))
         
         self.attachments(data.get("attachments",[]), data.get("attachment_remark", "-"))
         
-        # Update the page numbers on each page
-        def page_number_update(canvas, doc):
-            self.page_number = doc.page
-            canvas.saveState()
         
-        self.doc.build(self.story, onFirstPage=page_number_update, onLaterPages=page_number_update)
+        # Header for each page
+        frame = Frame(
+            self.doc.leftMargin, self.doc.bottomMargin, self.doc.width, self.doc.height,
+            id='normal'
+        )
+        template = PageTemplate(id='with_header', frames=[frame], onPage=self.add_header)
+        self.doc.addPageTemplates([template])
+        
+        self.doc.build(self.story)
 
 
 invoice = GenerateInvoicePDF("dynamic_invoice.pdf")
 
 data_format = {
-    "shop_name": "New Alhamra Shop 身体乳液",
+    "shop_name": "SIDDHAM HANDMADE 身体乳液",
     "registration_no": "+845749749JF",
-    "address1": "Cecilia Chapman 711-2880 Nulla St. Mankato Mississippi 96522",
-    "address2": "USA, UK, Canada, Australia, and 30+ more countries.",
+    "address1": "Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St. Mankato Mississippi 96522doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +",
+    "address2": "USA, UK, Canada, Australia,UK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, UK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, AustraliaAustralidoc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +height +a and 30+ more countries.",
     "phone_number": "+9484948494u49",
     "whatsapp_number": "+846846484",
     "email": "example@gmail.net",
@@ -637,8 +688,10 @@ data_format = {
     "account_number": "94849JUFJ9849",
     "invoice_table_data": [
             ['1', 'Hair Cut 身体乳液', '120.00', '1', '120.00'],
+            ['1', 'Hair Cut 身体乳液', '120.00', '1', '120.00'],
+            ['1', 'Hair Cut 身体乳液', '120.00', '1', '120.00'],
         ],
-    "attachments": ["image.jpg"],
+    "attachments": [],
     "attachment_remark": "Location of dummy, address of dummy, location map, directions to dummy Bangalore,Akshya"
 }
 
