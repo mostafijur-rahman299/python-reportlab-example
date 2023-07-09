@@ -355,7 +355,7 @@ class GenerateInvoicePDF:
             textColor=self.primary_color,
             rightIndent=-260,
             alignment=2,
-            wordWrap='RTL',
+            # wordWrap='RTL',
             fontName='MSYTC-Bold',
             leading=7
         )
@@ -376,7 +376,7 @@ class GenerateInvoicePDF:
             parent=self.styles['Normal'],
             fontSize=9,
             textColor=self.primary_color,
-            alignment=0,  # Right align the content
+            alignment=2,  # Right align the content
             leftIndent=3.5*inch,
             rightIndent=0.1*inch,
             wordWrap='RTL',
@@ -393,7 +393,7 @@ class GenerateInvoicePDF:
             [
                 Paragraph('Discount', table_calculation_right_col_style),
                 Paragraph(':', table_calculation_right_colon_style),
-                Paragraph(discount, table_calculation_right_col_val_style),
+                Paragraph('190.00', table_calculation_right_col_val_style),
             ],
             [
                 Paragraph('Total', table_calculation_right_col_style),

@@ -1,22 +1,26 @@
 from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image, Indenter, PageTemplate, BaseDocTemplate, Frame, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Table, Spacer, Paragraph, TableStyle, Image, PageTemplate, BaseDocTemplate, Frame
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.graphics.shapes import Drawing, Line
+
     
 
 class GenerateInvoicePDF:
     def __init__(self, filename):
         # self.filepath = f"{settings.BASE_DIR}{settings.MEDIA_DIRECTORY}invoice-pdfs"
-        self.doc = BaseDocTemplate(f"{filename}", pagesize=A4, topMargin=200, leftMargin=15, rightMargin=15, bottomMargin=200)
+        self.doc = BaseDocTemplate(f"{filename}", pagesize=A4, topMargin=400, leftMargin=15, rightMargin=15, bottomMargin=200)
         self.story = []
         self.styles = getSampleStyleSheet()
         self.primary_color = colors.HexColor("#443d3d")
         self.page_number = '1'
         self.data = {}
+        
+        self.header_height = 0
         
         pdfmetrics.registerFont(TTFont('MSYTC', 'fonts/microsoft-yahei/chinese.msyh.ttf'))
 
@@ -82,7 +86,9 @@ class GenerateInvoicePDF:
 
         phone_table = Table(phone_number_text)
         phone_table.setStyle(TableStyle([('ALIGN', (0, 0), (0, 0), 'CENTER')]))
-        template_data.append(phone_table)
+
+        
+        
         return template_data
         
     def invoice_header(self, invoice_to="", invoice_no="", DO_No="", PO_No="", invoice_date="", handled_by="", payment_term="", telephone_no="", email=""):
@@ -259,7 +265,7 @@ class GenerateInvoicePDF:
 
         template_data.append(table)
         return template_data
-               
+ 
     def add_header(self, canvas, doc):
         canvas.saveState()
         
@@ -267,26 +273,32 @@ class GenerateInvoicePDF:
         
         top_header = self.top_header(data.get("shop_name", ""), data.get("registration_no", ""), data.get("address1", ""), data.get("address2", ""), data.get("phone_number", ""), data.get("whatsapp_number", ""), data.get("email", ""))
         
-        # for tph in top_header:
-        #     tph.wrap(doc.width, doc.topMargin)
-        #     tph.drawOn(canvas, doc.leftMargin, doc.topMargin)
+        for tph in top_header:
+            w, h = tph.wrap(doc.width, doc.topMargin)
+            tph.drawOn(canvas, doc.leftMargin, doc.height + doc.topMargin - h + 185)            
             
-        # self.line_separator("100%", 1)
-        # Spacer(1, -0.2 * inch)
+        # Calculate the margin bottom for the header
+        margin_bottom = doc.topMargin - h - inch
         
-        # Create a KeepTogether instance to wrap the top_header content
-        top_header_content = KeepTogether(top_header)
-
-        top_header_content.wrap(doc.width, doc.topMargin)
-        top_header_content.drawOn(canvas, doc.leftMargin, doc.topMargin)
+        # Create a drawing and add a line at the bottom of the header
+        drawing = Drawing(doc.width, 1)
+        line = Line(0, 0, doc.width, 0)
+        line.strokeColor = colors.black
+        line.strokeWidth = 1
+        drawing.add(line)
         
-        sub_header = self.invoice_header(data.get("invoice_to", ""), data.get("invoice_no", ""), data.get("DO_No", ""), data.get("PO_No", ""), data.get("invoice_date", ""), data.get("handled_by", ""), data.get("payment_term", ""), data.get("telephone_no", ""), data.get("email", ""))
+        # Draw the line at the bottom of the header
+        drawing.drawOn(canvas, doc.leftMargin, margin_bottom + 500)
+        
+        invoice_header = self.invoice_header(data.get("invoice_to", ""), data.get("invoice_no", ""), data.get("DO_No", ""), data.get("PO_No", ""), data.get("invoice_date", ""), data.get("handled_by", ""), data.get("payment_term", ""), data.get("telephone_no", ""), data.get("email", ""))
+                 
+        for tph in invoice_header:
+            w, h = tph.wrap(doc.width, doc.topMargin)
+            tph.drawOn(canvas, doc.leftMargin - 50, doc.height + doc.topMargin - h + 5)
             
-        # for sheader in sub_header:
-        #     sheader.wrap(doc.width, doc.topMargin)
-        #     sheader.drawOn(canvas, doc.leftMargin, doc.height + doc.topMargin - 12)
+            print(h)
             
-        canvas.restoreState()
+        canvas.restoreState()     
       
     def line_separator(self, width, thickness):
         # Line separator
@@ -426,6 +438,8 @@ class GenerateInvoicePDF:
         col_widths = [2.2 * inch, 1 * inch, 4.6 * inch]
         table_calculation_data = Table(table_calculation_data, colWidths=col_widths)
         self.story.append(table_calculation_data)
+        
+        print(self.header_height)
             
     def terms_and_remark(self, account_number=""):
         underline_style = ParagraphStyle(
@@ -655,7 +669,6 @@ class GenerateInvoicePDF:
         
         self.attachments(data.get("attachments",[]), data.get("attachment_remark", "-"))
         
-        
         # Header for each page
         frame = Frame(
             self.doc.leftMargin, self.doc.bottomMargin, self.doc.width, self.doc.height,
@@ -665,6 +678,9 @@ class GenerateInvoicePDF:
         self.doc.addPageTemplates([template])
         
         self.doc.build(self.story)
+        
+        self.doc.onFirstPage = lambda canvas, doc: self.add_header(canvas, doc)
+        self.doc.onLaterPages = lambda canvas, doc: self.add_header(canvas, doc)
 
 
 invoice = GenerateInvoicePDF("dynamic_invoice.pdf")
@@ -672,8 +688,8 @@ invoice = GenerateInvoicePDF("dynamic_invoice.pdf")
 data_format = {
     "shop_name": "SIDDHAM HANDMADE 身体乳液",
     "registration_no": "+845749749JF",
-    "address1": "Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St.Cecilia Chapman 711-2880 Nulla St. Mankato Mississippi 96522doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +",
-    "address2": "USA, UK, Canada, Australia,UK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, UK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, AustraliaUK, Canada, AustraliaAustralidoc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +doc.height +height +a and 30+ more countries.",
+    "address1": "Cecilia Chapman 711-2880 Nulla +doc.height Cecilia Chapman 711-2880 Nulla +doc.heightCecilia Chapman 711-2880 Nulla +doc.heightCecilia Chapman 711-2880 Nulla +doc.height",
+    "address2": "USA, UK, Canada,  Canada,USA, UK, Canada USA, UK, Canada,  Canada,USA, UK, Canada",
     "phone_number": "+9484948494u49",
     "whatsapp_number": "+846846484",
     "email": "example@gmail.net",
